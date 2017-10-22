@@ -1,14 +1,15 @@
 import cv2
 
 import csv
-import sys
-import os
+import sys,os
+
 import calc_iou
 
 # 可视化通过 ./darknet detector valid 生成的文件
 # 参数分别为 文件路径，原始图像目录，扩展名
 # 如：../results/comp4_det_test_lines.txt /Users/shidanlifuhetian/All/data/lines_train_darknet jpg 0.5
 
+# 该文件仅仅可视化一些未标记的图像分割结果。每张分割图都会被保存下来
 
 def format_voc_label(label):
 
@@ -97,12 +98,6 @@ if __name__ == "__main__":
     reader = csv.reader(f,delimiter=' ')
 
     row_buffer = []
-    gt_buffer = [] # ground truth buffer
-    all_score = {
-        'recall_base': 0,
-        'precision_base': 0,
-        'match': 0
-    }
     tmp_folder = './tmp'
     marked_folder = tmp_folder+'/marked/'
     unknown_folder = tmp_folder+'/unknown/'
@@ -120,45 +115,22 @@ if __name__ == "__main__":
                 row_buffer.append(row)
             else:
                 file_name = row_buffer[0][0].replace('\\', '/')
-                image_full_name = data_folder + "/" + file_name + extension
+                image_full_name = data_folder + "/JPEGImages/" + file_name + extension
+                # /Users/shidanlifuhetian/All/data/lines_test_darknet/JPEGImages
                 img = cv2.imread(image_full_name)
 
-                annotation = image_full_name.replace('JPEGImages','labels')
-                annotation_file = annotation.replace(extension,'.txt')
-                f_a = open(annotation_file,'r')
-                reader_annotation = csv.reader(f_a,delimiter=' ')
-                for row_a in reader_annotation:
-                    gt_buffer.append(row_a)
-
-                score = calc_score(row_buffer,gt_buffer)
-                all_score['recall_base'] += score['recall_base']
-                all_score['precision_base'] += score['precision_base']
-                all_score['match'] += score['match']
-                img = draw_gt(img,gt_buffer)
                 img,bbox_drawed = draw_info(img,row_buffer,threshold=threshold)
+
                 # cv2.imshow(image_full_name, img)
-                # cv2.waitKey(0)
-                if bbox_drawed > 0:
-                    cc = marked_folder+file_name+extension
-                    pure_filename = file_name.split('/')[1]
-                    cv2.imwrite(marked_folder+pure_filename+extension,img)
+                # cv2.waitKey(1000)
+                if bbox_drawed>0:
+                    cv2.imwrite(marked_folder+file_name+extension,img)
                 else:
-                    cv2.imwrite(unknown_folder+pure_filename+extension,img)
-
-                print(score)
-
-                # if score['recall_base'] < score['match']:
+                    cv2.imwrite(unknown_folder+file_name+extension,img)
 
                 row_buffer = []  # clear buffer
-                gt_buffer = []
                 row_buffer.append(row)
         else:# empty
             row_buffer.append(row)
 
     f.close()
-
-    precision = all_score['match'] / all_score['precision_base']
-    recall = all_score['match'] / all_score['recall_base']
-    print('all_score',all_score)
-    print('precision: ',str(round(precision*100,2))+'%')
-    print('recall: ',str(round(recall*100,2))+'%')
