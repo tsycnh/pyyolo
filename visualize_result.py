@@ -35,20 +35,19 @@ def format_darknet_label(label,img_width,img_height):
 
 # 绘制voc格式的bbox
 def draw_info(img,rows,color=(0,0,255),threshold=0.5):
-    bbox_darwed = 0
+    bbox_drawed = 0
     for row in rows:
         confidence = float(row[1])
-        if confidence < threshold:
-            break
-        x = int(float(row[2]))
-        y = int(float(row[3]))
-        x2 = int(float(row[4]))
-        y2 = int(float(row[5]))
+        if confidence >= threshold:
+            x = int(float(row[2]))
+            y = int(float(row[3]))
+            x2 = int(float(row[4]))
+            y2 = int(float(row[5]))
 
-        cv2.rectangle(img, (x, y), (x2, y2),color=color)
-        cv2.putText(img, str(round(confidence, 2)), (x2, y + 10), cv2.FONT_HERSHEY_PLAIN, 1, color)
-        bbox_darwed+=1
-    return img,bbox_darwed
+            cv2.rectangle(img, (x, y), (x2, y2),color=color)
+            cv2.putText(img, str(round(confidence, 2)), (x2, y + 10), cv2.FONT_HERSHEY_PLAIN, 1, color)
+            bbox_drawed+=1
+    return img,bbox_drawed
 
 # 绘制darknet格式的bbox
 def draw_gt(img,rows,color=(0,255,0)):
@@ -138,9 +137,11 @@ if __name__ == "__main__":
                 img,bbox_drawed = draw_info(img,row_buffer,threshold=threshold)
                 # cv2.imshow(image_full_name, img)
                 # cv2.waitKey(0)
+                pure_filename = file_name.split('/')[1]
+
                 if bbox_drawed > 0:
                     cc = marked_folder+file_name+extension
-                    pure_filename = file_name.split('/')[1]
+                    # pure_filename = file_name.split('/')[1]
                     cv2.imwrite(marked_folder+pure_filename+extension,img)
                 else:
                     cv2.imwrite(unknown_folder+pure_filename+extension,img)
